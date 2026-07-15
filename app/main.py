@@ -12,7 +12,7 @@ def main():
         if command == "exit":
             break
         elif "echo" in command and command.find("echo") == 0:
-            print(command)
+            print(command[5:])
         else:
             sys.stdout.write(command + ": command not found\n")
     
