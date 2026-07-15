@@ -7,11 +7,14 @@ def main():
         sys.stdout.write("$ ")
 
         command = input()
+        command = command.strip()
 
-        if command.strip() == "exit":
+        if command == "exit":
             break
-
-        sys.stdout.write(command + ": command not found\n")
+        elif "echo" in command and command.find("echo") == 0:
+            print(command)
+        else:
+            sys.stdout.write(command + ": command not found\n")
     
     pass
 
