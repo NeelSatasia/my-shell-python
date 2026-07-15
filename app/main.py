@@ -23,7 +23,7 @@ def main():
 
             if len(in_commands) == 2:
                 if in_commands[1] in builtin_cmnds:
-                    print(in_commands[1] + "is a shell builtin")
+                    print(in_commands[1] + " is a shell builtin")
                 else:
                     print(in_commands[1] + ": not found")
 
