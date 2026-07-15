@@ -8,6 +8,9 @@ def main():
 
         command = input()
 
+        if command.strip() == "exit":
+            break
+
         sys.stdout.write(command + ": command not found\n")
     
     pass
