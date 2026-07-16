@@ -32,8 +32,11 @@ def main():
                     cmnd_valid = False
 
                     for directory in path_list:
-                        target_dir = Path(directory)
+                        if not os.path.isdir(directory):
+                            continue
 
+                        target_dir = Path(directory)
+                        
                         for item in target_dir.iterdir():
                             if item.is_file():
                                 if os.access(item, os.X_OK):
