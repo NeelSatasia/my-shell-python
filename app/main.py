@@ -1,5 +1,6 @@
 import sys
-
+import os
+from pathlib import Path
 
 def main():
 
@@ -25,7 +26,23 @@ def main():
                 if in_commands[1] in builtin_cmnds:
                     print(in_commands[1] + " is a shell builtin")
                 else:
-                    print(in_commands[1] + ": not found")
+                    system_path = os.environ.get('PATH')
+                    path_list = system_path.split(os.pathsep)
+                    
+                    cmnd_valid = False
+
+                    for directory in path_list:
+                        target_dir = Path(directory)
+
+                        for item in target_dir.iterdir():
+                            if item.is_file():
+                                if os.access(item, os.X_OK):
+                                    cmnd_valid = True
+                                    print(command + " is " + directory + "/" + command + "\n")
+                                    break
+                    
+                    if cmnd_valid == False:
+                        print(in_commands[1] + ": not found")
 
         else:
             sys.stdout.write(command + ": command not found\n")
