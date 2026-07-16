@@ -26,12 +26,13 @@ def main():
 
     valid_commands = set(["echo", "type"])
 
-    builtin_cmnds = set(["echo", "exit", "type", "pwd"])
+    builtin_cmnds = set(["echo", "exit", "type", "pwd", "cd"])
 
     TYPE = "type"
     ECHO = "echo"
     EXIT = "exit"
     PWD = "pwd"
+    CD = "cd"
 
 
     while True:
@@ -40,7 +41,7 @@ def main():
         command = input()
         command = command.strip()
 
-        if command == "exit":
+        if command == EXIT:
             break
 
         elif ECHO in command and command.find(ECHO) == 0:
@@ -59,8 +60,18 @@ def main():
                         print(in_commands[1] + ": not found")
                     else:
                         print(in_commands[1] + " is " + directory + "/" + in_commands[1])
+
         elif command == PWD:
             print(Path.cwd())
+        
+        elif CD in command and command.find(CD) == 0:
+            in_commands = command.split(" ")
+
+            try:
+                os.chdir(in_commands[1])
+            except FileNotFoundError:
+                print("cd: " + in_commands[1] + ": No such file or directory")
+
         else:
             ext_cmnd = command.split(" ")
 
