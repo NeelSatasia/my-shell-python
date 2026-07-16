@@ -1,6 +1,26 @@
 import sys
 import os
 from pathlib import Path
+import subprocess as sp
+
+
+def path_exec(filename: str):
+    system_path = os.environ.get('PATH')
+    path_list = system_path.split(os.pathsep)
+
+    for directory in path_list:
+        if not os.path.isdir(directory):
+            continue
+        
+        target_dir = Path(directory)
+        
+        for item in target_dir.iterdir():
+            if item.is_file() and item.name == filename:
+                if os.access(item, os.X_OK):
+                    return directory
+    
+    return ""
+    
 
 def main():
 
@@ -17,8 +37,10 @@ def main():
 
         if command == "exit":
             break
+
         elif "echo" in command and command.find("echo") == 0:
             print(command[5:])
+
         elif "type" in command and command.find("type") == 0:
             in_commands = command.split(" ")
 
@@ -26,34 +48,23 @@ def main():
                 if in_commands[1] in builtin_cmnds:
                     print(in_commands[1] + " is a shell builtin")
                 else:
-                    system_path = os.environ.get('PATH')
-                    path_list = system_path.split(os.pathsep)
-                    
-                    cmnd_valid = False
+                    directory = path_exec(in_commands[1])
 
-                    for directory in path_list:
-                        if not os.path.isdir(directory):
-                            continue
-                        
-                        target_dir = Path(directory)
-                        
-                        for item in target_dir.iterdir():
-                            if item.is_file() and item.name == in_commands[1]:
-                                if os.access(item, os.X_OK):
-                                    cmnd_valid = True
-                                    print(in_commands[1] + " is " + directory + "/" + in_commands[1])
-                                    break
-                        
-                        if cmnd_valid:
-                            break
-                    
-                    if cmnd_valid == False:
+                    if directory == '':
                         print(in_commands[1] + ": not found")
-
+                    else:
+                        print(in_commands[1] + " is " + directory + "/" + in_commands[1])
+        
         else:
-            sys.stdout.write(command + ": command not found\n")
-    
-    pass
+            ext_cmnd = command.split(" ")
+
+            directory = path_exec(ext_cmnd[0])
+
+            if directory == '':
+                print(ext_cmnd[0] + ": not found")
+            else:
+                sp.run(ext_cmnd)
+                continue
 
 
 if __name__ == "__main__":
