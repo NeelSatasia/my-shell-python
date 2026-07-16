@@ -34,14 +34,15 @@ def main():
                     for directory in path_list:
                         if not os.path.isdir(directory):
                             continue
-
+                        
+                        sub_directories = directory.split("/")
                         target_dir = Path(directory)
                         
                         for item in target_dir.iterdir():
                             if item.is_file():
                                 if os.access(item, os.X_OK):
                                     cmnd_valid = True
-                                    print(in_commands[1] + " is " + directory + "/" + in_commands[1] + "\n")
+                                    print(in_commands[1] + " is " + sub_directories[-1] + "/" + in_commands[1] + "\n")
                                     break
                     
                     if cmnd_valid == False:
