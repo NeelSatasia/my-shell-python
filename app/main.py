@@ -33,6 +33,7 @@ def main():
     EXIT = "exit"
     PWD = "pwd"
     CD = "cd"
+    HOME = "~"
 
 
     while True:
@@ -66,6 +67,10 @@ def main():
         
         elif CD in command and command.find(CD) == 0:
             in_commands = command.split(" ")
+
+            if in_commands[1] == "~":
+                os.chdir(Path.home())
+                continue
 
             try:
                 os.chdir(in_commands[1])
