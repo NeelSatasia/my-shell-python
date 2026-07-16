@@ -26,7 +26,12 @@ def main():
 
     valid_commands = set(["echo", "type"])
 
-    builtin_cmnds = set(["echo", "exit", "type"])
+    builtin_cmnds = set(["echo", "exit", "type", "pwd"])
+
+    TYPE = "type"
+    ECHO = "echo"
+    EXIT = "exit"
+    PWD = "pwd"
 
 
     while True:
@@ -38,10 +43,10 @@ def main():
         if command == "exit":
             break
 
-        elif "echo" in command and command.find("echo") == 0:
+        elif ECHO in command and command.find(ECHO) == 0:
             print(command[5:])
 
-        elif "type" in command and command.find("type") == 0:
+        elif TYPE in command and command.find(TYPE) == 0:
             in_commands = command.split(" ")
 
             if len(in_commands) == 2:
@@ -54,7 +59,8 @@ def main():
                         print(in_commands[1] + ": not found")
                     else:
                         print(in_commands[1] + " is " + directory + "/" + in_commands[1])
-        
+        elif command == PWD:
+            print(Path.cwd())
         else:
             ext_cmnd = command.split(" ")
 
