@@ -42,7 +42,6 @@ def main():
                             if item.is_file():
                                 if os.access(item, os.X_OK):
                                     cmnd_valid = True
-                                    print(sub_directories)
                                     print(in_commands[1] + " is " + directory + "/" + in_commands[1])
                                     break
                         
