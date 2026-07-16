@@ -35,14 +35,13 @@ def main():
                         if not os.path.isdir(directory):
                             continue
                         
-                        sub_directories = directory.split("/")
                         target_dir = Path(directory)
                         
                         for item in target_dir.iterdir():
-                            if item.is_file():
+                            if item.is_file() and item.name == in_commands[1]:
                                 if os.access(item, os.X_OK):
                                     cmnd_valid = True
-                                    print(in_commands[1] + " is /" + sub_directories[-1] + "/" + in_commands[1])
+                                    print(in_commands[1] + " is " + directory + "/" + in_commands[1])
                                     break
                         
                         if cmnd_valid:
