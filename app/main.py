@@ -46,15 +46,15 @@ def main():
 
         elif ECHO in command and command.find(ECHO) == 0:
             result = ""
-            open_quote = False
+            open_quote = ''
 
             for val in command[5:]:
-                if val == "'":
-                    if open_quote:
-                        open_quote = False
+                if (val == "'" or val == '"') and (len(open_quote) == 0 or open_quote == val):
+                    if len(open_quote) > 0:
+                        open_quote = ''
                     else:
-                        open_quote = True
-                elif open_quote or (open_quote == False and ((val == ' ' and len(result) > 0 and result[-1] != ' ') or val != ' ')):
+                        open_quote = val
+                elif len(open_quote) > 0 or (len(open_quote) == 0 and ((val == ' ' and len(result) > 0 and result[-1] != ' ') or val != ' ')):
                     result += val
 
             print(result)
@@ -76,16 +76,16 @@ def main():
         elif CAT in command and command.find(CAT) == 0:
             cat_params = []
             
-            open_quote = False
+            open_quote = ''
 
             for i in range(4, len(command)):
-                if command[i] == "'":
-                    if open_quote == False:
-                        open_quote = True
+                if (command[i] == "'" or command[i] == '"') and (len(open_quote) == 0 or open_quote == command[i]):
+                    if len(open_quote) == 0:
+                        open_quote = command[i]
                         cat_params.append("")
                     else:
-                        open_quote = False
-                elif open_quote:
+                        open_quote = ''
+                elif len(open_quote) > 0:
                     cat_params[-1] += command[i]
 
             sp.run(["cat"] + cat_params)
