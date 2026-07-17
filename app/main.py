@@ -24,8 +24,6 @@ def path_exec(filename: str):
 
 def main():
 
-    valid_commands = set(["echo", "type"])
-
     builtin_cmnds = set(["echo", "exit", "type", "pwd", "cd"])
 
     TYPE = "type"
@@ -34,6 +32,7 @@ def main():
     PWD = "pwd"
     CD = "cd"
     HOME = "~"
+    CAT = 'cat'
 
 
     while True:
@@ -46,7 +45,19 @@ def main():
             break
 
         elif ECHO in command and command.find(ECHO) == 0:
-            print(command[5:])
+            result = ""
+            open_quote = False
+
+            for val in command[5:]:
+                if val == "'":
+                    if open_quote:
+                        open_quote = False
+                    else:
+                        open_quote = True
+                elif open_quote or (open_quote == False and ((val == ' ' and len(result) > 0 and result[-1] != ' ') or val != ' ')):
+                    result += val
+
+            print(result)
 
         elif TYPE in command and command.find(TYPE) == 0:
             in_commands = command.split(" ")
@@ -62,13 +73,30 @@ def main():
                     else:
                         print(in_commands[1] + " is " + directory + "/" + in_commands[1])
 
+        elif CAT in command and command.find(CAT) == 0:
+            cat_params = []
+            
+            open_quote = False
+
+            for i in range(4, len(command)):
+                if command[i] == "'":
+                    if open_quote == False:
+                        open_quote = True
+                        cat_params.append("")
+                    else:
+                        open_quote = False
+                elif open_quote:
+                    cat_params[-1] += command[i]
+
+            sp.run(["cat"] + cat_params)
+
         elif command == PWD:
             print(Path.cwd())
         
         elif CD in command and command.find(CD) == 0:
             in_commands = command.split(" ")
 
-            if in_commands[1] == "~":
+            if in_commands[1] == HOME:
                 os.chdir(Path.home())
                 continue
 
