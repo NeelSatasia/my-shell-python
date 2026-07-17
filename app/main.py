@@ -47,13 +47,22 @@ def main():
         elif ECHO in command and command.find(ECHO) == 0:
             result = ""
             open_quote = ''
-
+            backslash = False
+            
             for val in command[5:]:
-                if (val == "'" or val == '"') and (len(open_quote) == 0 or open_quote == val):
+                if backslash == False and (val == "'" or val == '"') and (len(open_quote) == 0 or open_quote == val):
                     if len(open_quote) > 0:
                         open_quote = ''
                     else:
                         open_quote = val
+
+                elif val == '\\' and len(open_quote) == 0 and backslash == False:
+                    backslash = True
+                
+                elif backslash:
+                    result += val
+                    backslash = False
+
                 elif len(open_quote) > 0 or (len(open_quote) == 0 and ((val == ' ' and len(result) > 0 and result[-1] != ' ') or val != ' ')):
                     result += val
 
@@ -65,11 +74,13 @@ def main():
             if len(in_commands) == 2:
                 if in_commands[1] in builtin_cmnds:
                     print(in_commands[1] + " is a shell builtin")
+
                 else:
                     directory = path_exec(in_commands[1])
 
                     if directory == '':
                         print(in_commands[1] + ": not found")
+
                     else:
                         print(in_commands[1] + " is " + directory + "/" + in_commands[1])
 
@@ -77,15 +88,31 @@ def main():
             cat_params = []
             
             open_quote = ''
+            backslash = False
 
             for i in range(4, len(command)):
-                if (command[i] == "'" or command[i] == '"') and (len(open_quote) == 0 or open_quote == command[i]):
+                if backslash == False and (command[i] == "'" or command[i] == '"') and (len(open_quote) == 0 or open_quote == command[i]):
                     if len(open_quote) == 0:
                         open_quote = command[i]
                         cat_params.append("")
+
                     else:
                         open_quote = ''
+
+                elif command[i] == '\\' and backslash == False and len(open_quote) == 0:
+                    backslash = True
+                
+                elif backslash:
+                    cat_params[-1] += command[i]
+                    backslash = False
+
                 elif len(open_quote) > 0:
+                    cat_params[-1] += command[i]
+                
+                elif command[i] != ' ':
+                    if command[i-1] == ' ' and command[i-2] != '\\':
+                        cat_params.append("")
+                    
                     cat_params[-1] += command[i]
 
             sp.run(["cat"] + cat_params)
@@ -102,6 +129,7 @@ def main():
 
             try:
                 os.chdir(in_commands[1])
+
             except FileNotFoundError:
                 print("cd: " + in_commands[1] + ": No such file or directory")
 
@@ -112,6 +140,7 @@ def main():
 
             if directory == '':
                 print(ext_cmnd[0] + ": not found")
+
             else:
                 sp.run(ext_cmnd)
                 continue
