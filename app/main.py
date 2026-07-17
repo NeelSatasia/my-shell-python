@@ -94,7 +94,9 @@ def main():
                 if backslash == False and (command[i] == "'" or command[i] == '"') and (len(open_quote) == 0 or open_quote == command[i]):
                     if len(open_quote) == 0:
                         open_quote = command[i]
-                        cat_params.append("")
+
+                        if command[i-1] == ' ' and command[i-2] != ' ':
+                            cat_params.append("")
 
                     else:
                         open_quote = ''
@@ -107,7 +109,10 @@ def main():
                     backslash = False
 
                 elif len(open_quote) > 0:
-                    cat_params[-1] += command[i]
+                    if command[i] == '\\':
+                        cat_params[-1] += '\\'
+                    else:
+                        cat_params[-1] += command[i]
                 
                 elif command[i] != ' ':
                     if command[i-1] == ' ' and command[i-2] != '\\':
