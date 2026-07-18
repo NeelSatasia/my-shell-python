@@ -48,21 +48,21 @@ def main():
             result = ""
             open_quote = ''
             backslash = False
-            
-            for val in command[5:]:
+
+            for i, val in enumerate(command[5:], start=5):
                 if backslash == False and (val == "'" or val == '"') and (len(open_quote) == 0 or open_quote == val):
                     if len(open_quote) > 0:
                         open_quote = ''
                     else:
                         open_quote = val
 
-                elif val == '\\' and len(open_quote) == 0 and backslash == False:
+                elif val == '\\' and (len(open_quote) == 0 or (open_quote == '"' and i + 1 < len(command) and (command[i+1] == '"' or command[i+1] == '\\'))) and backslash == False:
                     backslash = True
                 
                 elif backslash:
                     result += val
                     backslash = False
-
+                
                 elif len(open_quote) > 0 or (len(open_quote) == 0 and ((val == ' ' and len(result) > 0 and result[-1] != ' ') or val != ' ')):
                     result += val
 
@@ -101,7 +101,7 @@ def main():
                     else:
                         open_quote = ''
 
-                elif command[i] == '\\' and backslash == False and len(open_quote) == 0:
+                elif command[i] == '\\' and backslash == False and (len(open_quote) == 0 or (open_quote == '"' and i + 1 < len(command) and (command[i+1] == '"' or command[i+1] == '\\'))):
                     backslash = True
                 
                 elif backslash:
@@ -109,10 +109,7 @@ def main():
                     backslash = False
 
                 elif len(open_quote) > 0:
-                    if command[i] == '\\':
-                        cat_params[-1] += '\\'
-                    else:
-                        cat_params[-1] += command[i]
+                    cat_params[-1] += command[i]
                 
                 elif command[i] != ' ':
                     if command[i-1] == ' ' and command[i-2] != '\\':
