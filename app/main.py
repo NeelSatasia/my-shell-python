@@ -136,7 +136,37 @@ def main():
                 print("cd: " + in_commands[1] + ": No such file or directory")
 
         else:
-            ext_cmnd = command.split(" ")
+            ext_cmnd = ['']
+
+            if command[0] == "'" or command[0] == '"':
+                open_quote = command[0]
+                ext_cmnd[0] = ''
+                backslash = False
+
+                i = 1
+                for val in command[1:]:
+                    if val == open_quote:
+                        i += 1
+                        break
+                    elif open_quote == '"' and val == '\\' and (command[i+1] == '"' or command[i+1] == '\\'):
+                        backslash = True
+                    
+                    elif backslash:
+                        ext_cmnd[0] += val
+                        backslash = False
+
+                    else:
+                        ext_cmnd[0] += val
+                    
+                    i += 1
+
+                while i < len(command) and command[i] == ' ':
+                    i += 1
+                
+                ext_cmnd += command[i:].split(' ')
+
+            else:
+                ext_cmnd = command.split(' ')
 
             directory = path_exec(ext_cmnd[0])
 
