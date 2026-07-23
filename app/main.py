@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess as sp
 
 
-builtin_cmnds = set(["echo", "exit", "type", "pwd", "cd"])
+builtin_cmnds = ("echo", "exit", "type", "pwd", "cd")
 
 TYPE = "type"
 ECHO = "echo"
@@ -14,6 +14,8 @@ CD = "cd"
 HOME = "~"
 CAT = 'cat'
 LS = 'ls'
+STDOUT_REDIRECTS = ('>', '1>', '>>', '1>>')
+STDERR_REDIRECTS = ('2>', '2>>')
 
 def path_exec(filename: str):
     system_path = os.environ.get('PATH')
@@ -81,12 +83,12 @@ def clean_raw_cmnd(full_cmnd: str):
 def find_redirect(cmnd: list[str]):
     i = 1
     while i < len(cmnd):
-        if cmnd[i] in ['>', '1>', '2>']:
-            break
+        if cmnd[i] in STDOUT_REDIRECTS or cmnd[i] in STDERR_REDIRECTS:
+            return i
         else:
             i += 1
     
-    return i
+    return -1
 
 def main():
 
@@ -101,25 +103,30 @@ def main():
         if len(clean_cmnd) == 0:
             continue
 
+        redirect_idx = find_redirect(clean_cmnd)
+
         if clean_cmnd[0] == EXIT:
             break
 
         elif clean_cmnd[0] == ECHO:           
-            if '>' in clean_cmnd or '1>' in clean_cmnd or '2>' in clean_cmnd:
-                i = find_redirect(clean_cmnd)
-                
-                input_txt = " ".join(clean_cmnd[1:i])
+            if redirect_idx > -1:
+                input_txt = " ".join(clean_cmnd[1:redirect_idx])
 
                 file_path = Path(clean_cmnd[-1])
 
-                if clean_cmnd[i] == '2>':
-                    with open(file_path, "w") as f:
+                mode = 'w'
+
+                if clean_cmnd[redirect_idx] in STDOUT_REDIRECTS[2:]:
+                    mode = 'a'
+
+                if clean_cmnd[redirect_idx] in STDERR_REDIRECTS:
+                    with open(file_path, mode) as f:
                         f.write("")
 
-                    print(" ".join(clean_cmnd[1:i]))
+                    print(" ".join(clean_cmnd[1:redirect_idx]))
                 
                 else:
-                    with open(file_path, "w") as f:
+                    with open(file_path, mode) as f:
                         f.write(input_txt + "\n")
 
             else:
@@ -143,15 +150,12 @@ def main():
 
         elif clean_cmnd[0] == CAT:
 
-            if '>' in clean_cmnd or '1>' in clean_cmnd or '2>' in clean_cmnd:
-
-                i = find_redirect(clean_cmnd)
-
+            if redirect_idx > -1:
                 combined_text = ""
 
                 valid_params = [CAT]
 
-                for j in range(1, i):
+                for j in range(1, redirect_idx):
                     
                     file_path = Path(clean_cmnd[j])
                     error_message = CAT + ": " + clean_cmnd[j] + ": No such file or directory"
@@ -159,14 +163,14 @@ def main():
                     file_exists = file_path.is_file()
 
                     if file_exists:
-                        if clean_cmnd[i] in ['>', '1>']:
+                        if clean_cmnd[redirect_idx] in STDOUT_REDIRECTS:
                             f = open(file_path)
                             combined_text += f.read()
                         
                         else:
                             valid_params.append(clean_cmnd[j])
 
-                    elif clean_cmnd[i] == '2>':
+                    elif clean_cmnd[redirect_idx] in STDERR_REDIRECTS:
                         combined_text += error_message + "\n"
                         
                     else:
@@ -175,7 +179,12 @@ def main():
                 if len(valid_params) > 1:
                     sp.run(valid_params)
 
-                with open(clean_cmnd[-1], "w") as file:
+                mode = 'w'
+
+                if clean_cmnd[redirect_idx] in STDOUT_REDIRECTS[2:]:
+                    mode = 'a'
+
+                with open(clean_cmnd[-1], mode) as file:
                     file.write(combined_text)
 
             else:
@@ -196,33 +205,48 @@ def main():
                 print(CD + ": " + clean_cmnd[1] + ": No such file or directory")
 
         elif len(clean_cmnd) >= 2 and clean_cmnd[0] == LS and clean_cmnd[1] == "-1":
-
-            if '>' in clean_cmnd or '1>' in clean_cmnd or '2>' in clean_cmnd:
-                i = find_redirect(clean_cmnd)
-
+            if redirect_idx > -1:
                 dir_items = []
+                errors = []
 
-                for j in range(2, i):
+                for j in range(2, redirect_idx):
                 
                     dir_path = Path(clean_cmnd[j])
                     dir_exists = os.path.isdir(dir_path)
 
-                    if dir_exists and (clean_cmnd[i] in ['>', '1>']):
+                    if dir_exists and clean_cmnd[redirect_idx] in STDOUT_REDIRECTS:
+                        curr_dir_len = len(dir_items)
                         dir_items.extend(os.listdir(dir_path))
 
-                        for i in range(len(dir_items)):
-                            dir_items[i] = dir_items[i] + "\n"
+                        for k in range(curr_dir_len, len(dir_items)):
+                            dir_items[k] = dir_items[k] + "\n"
                     
-                    elif dir_exists == False and clean_cmnd[i] == '2>':
-                        dir_items.append(LS + ": " + clean_cmnd[j] + ": No such file or directory\n")
+                    elif dir_exists == False and clean_cmnd[redirect_idx] in STDERR_REDIRECTS:
+                        errors.append(LS + ": " + clean_cmnd[j] + ": No such file or directory\n")
                         
 
                 dir_items.sort()
 
                 file_path = Path(clean_cmnd[-1])
 
-                with open(file_path, 'w') as file:
-                    file.writelines(dir_items)
+                mode = 'w'
+
+                if clean_cmnd[redirect_idx] in STDOUT_REDIRECTS[2:]:
+                    mode = 'a'
+
+                if clean_cmnd[redirect_idx] in STDOUT_REDIRECTS:
+                    for error in errors:
+                        print(error)
+
+                    with open(file_path, mode) as file:
+                        file.writelines(dir_items)
+                
+                elif clean_cmnd[redirect_idx] in STDERR_REDIRECTS:
+                    for dir_item in dir_items:
+                        print(dir_item)
+
+                    with open(file_path, mode) as file:
+                        file.writelines(errors)
         
         else:
             directory = path_exec(clean_cmnd[0])
