@@ -2,7 +2,8 @@ import sys
 import os
 from pathlib import Path
 import subprocess as sp
-
+import tty
+import termios
 
 builtin_cmnds = ("echo", "exit", "type", "pwd", "cd")
 
@@ -16,6 +17,9 @@ CAT = 'cat'
 LS = 'ls'
 STDOUT_REDIRECTS = ('>', '1>', '>>', '1>>')
 STDERR_REDIRECTS = ('2>', '2>>')
+
+fd = sys.stdin.fileno()
+old_settings = termios.tcgetattr(fd)
 
 def path_exec(filename: str):
     system_path = os.environ.get('PATH')
@@ -90,13 +94,56 @@ def find_redirect(cmnd: list[str]):
     
     return -1
 
-def main():
+
+def tab_completion(curr_cmnd: str):
+    curr_cmnd = curr_cmnd.strip()
+
+    for cmnd in builtin_cmnds:
+        if len(curr_cmnd) <= len(cmnd) and curr_cmnd == cmnd[:len(curr_cmnd)]:
+            return cmnd[len(curr_cmnd):] + ' '
+
+    return ""
+
+
+def readline():
+    command = ""
 
     while True:
-        sys.stdout.write("$ ")
+        ch = sys.stdin.read(1)
 
-        raw_cmnd = input()
-        raw_cmnd = raw_cmnd.strip()
+        if ch == "\r" or ch == "\n": 
+            sys.stdout.write("\r\n")
+            sys.stdout.flush()
+            return command
+
+        elif ch == "\x7f":  
+            if len(command) > 0:
+                command = command[:-1]
+                sys.stdout.write("\b \b")
+                sys.stdout.flush()
+
+        elif ch == "\t":
+            remaining = tab_completion(command)
+            command += remaining
+            sys.stdout.write(remaining)
+            sys.stdout.flush()
+
+        else:
+            command += ch
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+
+
+def main():
+
+    tty.setraw(fd)
+
+    while True:
+        sys.stdout.write("\r$ ")
+        sys.stdout.flush()
+
+        raw_cmnd = readline()
+        #raw_cmnd = raw_cmnd.strip()
 
         clean_cmnd = clean_raw_cmnd(raw_cmnd)
 
@@ -106,6 +153,7 @@ def main():
         redirect_idx = find_redirect(clean_cmnd)
 
         if clean_cmnd[0] == EXIT:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
             break
 
         elif clean_cmnd[0] == ECHO:           
@@ -177,7 +225,9 @@ def main():
                         print(error_message)
 
                 if len(valid_params) > 1:
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                     sp.run(valid_params)
+                    tty.setraw(fd)
 
                 mode = 'w'
 
@@ -188,7 +238,9 @@ def main():
                     file.write(combined_text)
 
             else:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 sp.run(clean_cmnd)
+                tty.setraw(fd)
 
         elif clean_cmnd[0] == PWD:
             print(Path.cwd())
@@ -253,7 +305,9 @@ def main():
                 print(clean_cmnd[0] + ": not found")
 
             else:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 sp.run(clean_cmnd)
+                tty.setraw(fd)
 
 
 if __name__ == "__main__":
