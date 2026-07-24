@@ -100,9 +100,9 @@ def tab_completion(curr_cmnd: str):
 
     for cmnd in builtin_cmnds:
         if len(curr_cmnd) <= len(cmnd) and curr_cmnd == cmnd[:len(curr_cmnd)]:
-            return cmnd[len(curr_cmnd):] + ' '
+            return cmnd[len(curr_cmnd):] + ' ', True
 
-    return ""
+    return "", False
 
 
 def readline():
@@ -123,7 +123,12 @@ def readline():
                 sys.stdout.flush()
 
         elif ch == "\t":
-            remaining = tab_completion(command)
+            remaining, found = tab_completion(command)
+            if found == False:
+                sys.stdout.write("\a")
+                sys.stdout.flush()
+                continue
+
             command += remaining
             sys.stdout.write(remaining)
             sys.stdout.flush()
