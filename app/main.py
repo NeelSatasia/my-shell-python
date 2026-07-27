@@ -21,7 +21,7 @@ STDERR_REDIRECTS = ('2>', '2>>')
 fd = sys.stdin.fileno()
 old_settings = termios.tcgetattr(fd)
 
-def path_exec(filename: str):
+def path_exec(filename: str, is_partial: bool = False):
     system_path = os.environ.get('PATH')
     path_list = system_path.split(os.pathsep)
 
@@ -32,9 +32,13 @@ def path_exec(filename: str):
         target_dir = Path(directory)
         
         for item in target_dir.iterdir():
-            if item.is_file() and item.name == filename:
-                if os.access(item, os.X_OK):
-                    return directory
+            if item.is_file():
+                if (is_partial == False and item.name == filename) or (is_partial == True and len(filename) <= len(item.name) and filename == item.name[:len(filename)]):
+                    if os.access(item, os.X_OK):
+                        if is_partial:
+                            return item.name[len(filename):]
+                        
+                        return directory + "/" + item.name
     
     return ""
 
@@ -101,6 +105,11 @@ def tab_completion(curr_cmnd: str):
     for cmnd in builtin_cmnds:
         if len(curr_cmnd) <= len(cmnd) and curr_cmnd == cmnd[:len(curr_cmnd)]:
             return cmnd[len(curr_cmnd):] + ' ', True
+
+    exec_path = path_exec(curr_cmnd, True)
+
+    if exec_path != '':
+        return exec_path + ' ', True
 
     return "", False
 
@@ -193,13 +202,13 @@ def main():
                     print(clean_cmnd[1] + " is a shell builtin")
 
                 else:
-                    directory = path_exec(clean_cmnd[1])
+                    final_path = path_exec(clean_cmnd[1])
 
-                    if directory == '':
+                    if final_path == '':
                         print(clean_cmnd[1] + ": not found")
 
                     else:
-                        print(clean_cmnd[1] + " is " + directory + "/" + clean_cmnd[1])
+                        print(clean_cmnd[1] + " is " + final_path)
 
         elif clean_cmnd[0] == CAT:
 
@@ -304,9 +313,9 @@ def main():
                             file.write(error + "\n")
         
         else:
-            directory = path_exec(clean_cmnd[0])
+            final_path = path_exec(clean_cmnd[0])
 
-            if directory == '':
+            if final_path == '':
                 print(clean_cmnd[0] + ": not found")
 
             else:
